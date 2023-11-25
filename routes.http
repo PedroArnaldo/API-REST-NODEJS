@@ -1,0 +1,9 @@
+POST https://localhost:3333/summarization
+Content-Type: application/json
+
+{
+    "title" : "test",
+    "link" : "test",
+    "startAt" : 68,
+    "endAt" : 300
+}
