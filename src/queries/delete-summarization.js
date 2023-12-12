@@ -1,9 +1,9 @@
-import sql from "./index.js"
+import sql  from "./index.js";
 
-const getSummarization = async () => {
+const deleteSummarization = async (id) => {
     try {
         const response = await sql` 
-           SELECT * FROM summarizations order by id ASC
+            DELETE FROM summarizations WHERE id = ${id}
         `;
         return response;
         
@@ -13,4 +13,4 @@ const getSummarization = async () => {
     }
 };
 
-export default getSummarization;
+export default deleteSummarization;
