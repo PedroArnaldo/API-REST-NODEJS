@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "node --watch --env-file=.env src/index.js"
+    "dev": "node --watch --env-file=.env src/index.js",
+    "lint:check": "prettier --check .",
+    "lint:fix": "prettier --write ."
   },
   "keywords": [],
   "author": "",
@@ -18,5 +20,8 @@
     "postgres": "^3.4.3",
     "ytdl-core": "^4.11.5",
     "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "prettier": "^3.1.1"
   }
 }

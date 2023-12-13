@@ -23,7 +23,7 @@ const audioSchema = z.object({
   link: z
     .string()
     .regex(
-      new RegExp(/https:\/\/www\.youtube\.com\/watch\?v=[a-zA-Z0-9_-]{11}/)
+      new RegExp(/https:\/\/www\.youtube\.com\/watch\?v=[a-zA-Z0-9_-]{11}/),
     ),
   startAt: z.number(),
   endAt: z.number(),

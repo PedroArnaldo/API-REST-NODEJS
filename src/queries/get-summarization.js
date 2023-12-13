@@ -1,16 +1,15 @@
-import sql from "./index.js"
+import sql from "./index.js";
 
 const getSummarization = async () => {
-    try {
-        const response = await sql` 
+  try {
+    const response = await sql` 
            SELECT * FROM summarizations order by id ASC
         `;
-        return response;
-        
-    } catch (error) {
-        console.log(error);
-        throw error;
-    }
+    return response;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
 };
 
 export default getSummarization;

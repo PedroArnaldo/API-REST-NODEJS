@@ -16,7 +16,7 @@ const processVideo = async (data) => {
       data.title,
       data.link,
       data.startAt,
-      data.endAt
+      data.endAt,
     );
 
     const videoReableStream = ytdl(validateData.link, {
