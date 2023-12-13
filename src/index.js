@@ -1,22 +1,14 @@
 import { z } from "zod";
-import ytdl from "ytdl-core";
 import Fastify from "fastify";
-import { unlink } from "node:fs";
-import ffmpeg from "fluent-ffmpeg";
-import { AssemblyAI } from "assemblyai";
-import { randomUUID } from "node:crypto";
 
 import createSummarization from "./queries/create-summarization.js";
 import getSummarization from "./queries/get-summarization.js";
 import deleteSummarization from "./queries/delete-summarization.js";
+import updateSummarization from "./queries/update-summarization.js";
 import { ValidateData } from "./class/validatedData.js";
 import processVideo from "./services/videoProcessor.js";
 
 const server = Fastify();
-
-const AssemblyAIClient = new AssemblyAI({
-  apiKey: process.env.ASSEMBLYAI_API_KEY,
-});
 
 const audioSchema = z.object({
   title: z.string(),
@@ -94,17 +86,22 @@ server.get("/summarization", async (request, response) => {
 });
 
 server.put("/summarization/:id", async (request, response) => {
-  const summarizationId = request.params.id;
-  const { title, link, startAt, endAt } = request.body;
+  try {
+    const summarizationId = request.params.id;
+    const { title, link, startAt, endAt } = request.body;
 
-  const validateData = new ValidateData(title, link, startAt, endAt);
+    const newData = new ValidateData(title, link, startAt, endAt);
 
-  //fazer a mesma requisições do post
+    const updateData = await processVideo(newData);
 
-  console.log(validateData);
-  console.log(summarizationId);
+    await updateSummarization(summarizationId, updateData);
 
-  return response.status(204).send();
+    return response
+      .status(204)
+      .send({ message: "Successfully updated summarization" });
+  } catch (error) {
+    return response.status(500).send({ message: error });
+  }
 });
 
 server.delete("/summarization/:id", async (request, response) => {
