@@ -1,14 +1,16 @@
-import { z } from "zod";
+import { z } from 'zod';
 import ytdl from 'ytdl-core';
 import Fastify from 'fastify';
-import { unlink } from "node:fs";
+import { unlink } from 'node:fs';
 import ffmpeg from 'fluent-ffmpeg';
-import { AssemblyAI } from "assemblyai";
+import { AssemblyAI } from 'assemblyai';
 import { randomUUID } from 'node:crypto';
 
 import createSummarization  from './queries/create-summarization.js';
 import getSummarization  from './queries/get-summarization.js';
-import { ValidateData } from "./class/validatedData.js";
+import deleteSummarization from './queries/delete-summarization.js';
+import { ValidateData } from './class/validatedData.js';
+import processVideo from './services/videoProcessor.js';
 
 const server = Fastify();
 
@@ -27,6 +29,7 @@ const audioSchema = z.object({
 const validateBody = (request, reply, done) => {
 	try {
 		if (request.method === 'POST' || request.method === 'PUT'){
+			console.log(Object.keys(request.body).length);
 			if (Object.keys(request.body).length !==  4)
 				throw 'Body is invalid, check the body parameters.';
 			
@@ -69,50 +72,12 @@ server.post("/summarization", async (request, response) => {
 		
 		const validateData = new ValidateData(title, link, startAt, endAt);
 		
-		const videoReableStream = ytdl(validateData.link, {
-			quality: "lowestaudio"
-		});
-		
-		const filename = `${randomUUID()}.mp3`;
-		const outputFolder = "public/audios/";
+		const newData = await processVideo(validateData);
 
-		const ffmpegCommand = ffmpeg(videoReableStream)
-		.noVideo()
-		.audioCodec("libmp3lame")
-		.audioBitrate(128)
-		.seekInput(validateData.startAt)
-		.duration(validateData.endAt - validateData.startAt)
-		.format("mp3")
-		.output(`${outputFolder}${filename}`);
-		
-		
-		await new Promise((resolve, reject) => {
-			ffmpegCommand.on("end", resolve);
-			ffmpegCommand.on("error", reject);
-			ffmpegCommand.run();
-		});
-		
-		/* const params = {
-			audio: `${outputFolder}${filename}`,
-			summarization: true,
-			summary_model: 'informative',
-			summary_type: 'bullets'
-		}
-
-		const transcript = await AssemblyAIClient.transcripts.transcribe(params);
-		*/
-		validateData.updateTranscript("transcript.transcript");
-		validateData.updateSummary("transcript.summary");
-
-		if (!validateData.isValidInfo())
+		if (!newData.isValidInfo())
 			throw 'Information sent is invalid';
 
-		await createSummarization(validateData);
-
-		unlink(`${outputFolder}${filename}`, (err) => {
-			if(err) return console.log(err);
-			console.log(`${outputFolder}${filename} deleted successfully`);
-		});
+		await createSummarization(newData);
 
 		return response.status(201).send({message: "Successfully created summarization"});
 		
@@ -126,27 +91,28 @@ server.get("/summarization", async (request, response) => {
 	return response.status(200).send(summarization);
 });
 
-server.put("/summarization/:id", (request, response) => {
+server.put("/summarization/:id", async (request, response) => {
 	const summarizationId = request.params.id;
 	const { title, link, startAt, endAt } = request.body;
 
-	database.update(summarizationId, {
-		title: title,
-		link: link,
-		startAt: startAt,
-		endAt: endAt,
-	})
+	const validateData = new ValidateData(title, link, startAt, endAt);
+
+	//fazer a mesma requisições do post
+
+	console.log(validateData);
+	console.log(summarizationId);
 
 	return response.status(204).send();
 });
 
-server.delete("/summarization/:id", (request, response) => {
-	const summarizationId = request.params.id;
-
-	console.log('Delete: ' + summarizationId);
-	//database.delete(summarizationId);
-
-	return response.status(200).send({"message" : "successfully removed"});
+server.delete("/summarization/:id", async (request, response) => {
+	try {
+		const summarizationId = request.params.id;
+		await deleteSummarization(summarizationId);
+		return response.status(200).send({"message" : "successfully removed"});
+	} catch (error) {
+		return response.status(500).send({"message" : error});
+	}
 });
 
 server.listen({
