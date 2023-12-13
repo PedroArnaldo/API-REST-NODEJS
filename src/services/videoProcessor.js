@@ -54,13 +54,17 @@ const processVideo = async (data) => {
     validateData.updateTranscript("transcript.transcript");
     validateData.updateSummary("transcript.summary");
 
+    if (!validateData.isValidInfo()) throw "Error data";
+
     unlink(`${outputFolder}${filename}`, (err) => {
       if (err) return console.log(err);
       console.log(`${outputFolder}${filename} deleted successfully`);
     });
 
     return validateData;
-  } catch (error) {}
+  } catch (error) {
+    throw error;
+  }
 };
 
 export default processVideo;
